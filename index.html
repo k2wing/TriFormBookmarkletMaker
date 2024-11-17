@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <base target="_top">
+
+  <!--main style-->
+  <style>
+    body {
+      margin: 0;
+    }
+
+    header {
+      text-align: center;
+    }
+    header h4 {
+      
+      color:rgb(4, 116, 101);
+      margin: 10px 0px;
+    }
+
+    footer {
+      text-align: right;
+      font-size: 50%;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 100%;
+      grid-template-rows: auto auto auto auto;
+      place-items: stretch;
+      grid-template-areas:
+        "contentlist"
+        "commonsection"
+        "timingcontent"
+        "commonsection2";
+    }
+
+    ul#content-list {
+      grid-area: contentlist;
+      list-style-type: none;
+      padding: 0px;
+      margin-top: 0px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+        
+    }
+
+     UL#content-list LI {
+        cursor: pointer;
+        user-select: none;
+        z-index: auto;
+        display: grid;
+        place-items: center;
+        width: 16.0%;
+        height: 60px;
+        box-sizing: border-box;
+        background-color: rgb(208, 230, 226);
+    }
+
+    UL#content-list LI.selected {
+      background-color: rgb(129, 224, 212);
+    }
+
+    .input-item {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      grid-template-rows: auto;
+      grid-template-areas: "label input";
+      margin-bottom: 10px;
+      gap: 3px;
+    }
+
+    .input-item > input {
+      grid-area: input;
+    }
+
+    .input-item > label {
+      grid-area: label;
+      user-select: none;
+      align-items: center;
+      display: flex;
+    }
+
+    .input-item.copy {
+      /*スマホ等画面横幅小サイズの場合「100px auto max-content」だとinputが最小サイズ(auto)未満になることができないため横にはみ出てしまう。そのため最小を0にして調整*/
+      grid-template-columns: 100px minmax(0,auto) max-content;
+      grid-template-areas: "label input copy";
+    }
+
+    .input-item.copy > button {
+      grid-area: copy;      
+    }
+
+    fieldset {
+      box-sizing: border-box;
+      border-style: none;
+      padding: 0px;
+    }
+
+    fieldset.timing-content {
+      display: none;
+      grid-area: timingcontent;
+      border-style: none; 
+      position: relative;
+    }    
+    fieldset.timing-content.selected {
+      display: block;
+    }
+
+    fieldset#common-section {
+      grid-area: commonsection;
+    }
+
+    fieldset#common-section2 {
+      grid-area: commonsection2;
+      display: grid;
+      grid-template-columns: 1fr max-content;
+      grid-template-rows: auto auto auto;
+      place-items: stretch;
+      gap: 5px;
+      grid-template-areas:
+        "textarea textarea"
+        "link copy"
+        "details details";
+    }
+    fieldset#common-section2 > textarea {
+      grid-area: textarea;
+      width: 100%;
+      height: 100px;
+      box-sizing: border-box;
+    }
+    fieldset#common-section2 > a {
+      grid-area: link;
+    }
+    fieldset#common-section2 > button {
+      grid-area: copy;
+    }
+    
+    fieldset#common-section2 > div.details {
+      grid-area: details;
+      color: gray;
+      font-size: 80%;
+      background-color: rgb(250, 242, 233);
+      margin-top: 5px;
+    }
+
+    div.details > h4 {
+      margin-top: 0px;
+      padding-left: 1em;
+      background-color: rgb(255, 230, 193);
+    }
+    div.details > ul {
+      margin-top: 0px;
+      padding: 0px 5px 0px 25px;
+    }
+    div.details > ul > li {
+      line-height: 3em;
+      
+    }
+    div.details > ul > li > ul {
+      padding: 0px 5px 0px 15px;
+    }
+    div.details > ul > li > ul > li {
+      line-height: 1.8em;
+    }
+    div.details > ul > li > div {
+      line-height: 1.8em;
+    }
+  </style>
+
+  <!--library-->
+  <script>
+    this.globalThis = this.globalThis || window;
+    const TRACE = true;
+
+    class Util {
+
+      static log = TRACE ? (...args) => { console.log.apply(console, args) } : () => { };
+
+      /**
+       * ゼロパディング
+       * @param {string|number} value - ゼロパディングする数値、文字列
+       * @param {number} digit - 桁数
+       * @returns ゼロパディングされた数値(文字列)
+       */
+      static zeroPadding(value, digit) {
+
+        return (new Array(digit).fill("0", 0, digit).join("") + value).slice(-digit);
+      }
+
+      /**
+       * 文字列書式設定(簡易版)
+       * @param {string} format - 書式指定文字列。%sのみ使用可。
+       * @param  {...any} args - フォーマット引数の値を表す文字列。
+       * @returns formatに基づき生成された文字列。
+       */
+      static formatString(format, ...args) {
+
+        let i = 0;
+
+        return format.replace(/%s/g, () => args[i++]);
+      }
+
+      /**
+       * クリップボードに文字列をコピーする
+       * @param {string} text - コピーする文字列を指定
+       */
+      static copyTextToClipboad(text) {
+
+        // 古い手法を使った今後廃止予定の機能
+        const oldCopyTextToClipboad = (text) => {
+
+          // execCommandはテキストが選択状態時に機能するため一度テキストエリアに文字列を設定し選択状態にする
+          // ※textarea.style.display = "none";にすると選択できないためコピー不可
+          const textarea = document.createElement("TEXTAREA");
+          textarea.value = text;
+          document.body.appendChild(textarea);
+
+          // iOS系
+          if(navigator.userAgent.match(/ipad|ipod|iphone/i)){
+            
+            const range = document.createRange();
+            range.selectNode(textarea);
+            window.getSelection().addRange(range);
+          
+          // それ以外
+          } else {
+
+            textarea.select();
+          }
+          
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+          console.log("copied by execCommand");
+        }
+
+        // 最近のクリップボードAPIから使用
+        if (navigator.clipboard) {
+          
+            navigator.clipboard.writeText(text).then(() => {
+              console.log("navigator.clipboard worked");
+            }, () => {
+              // 失敗時
+              // Android等navigator.clipboardが使用できない場合の最終的な手段
+              console.log("navigator.clipboard did not worked");
+              oldCopyTextToClipboad(text);
+            });        
+         
+          // 対応していないブラウザ向け
+        } else {
+          
+          oldCopyTextToClipboad(text);
+        }
+      }
+    }
+
+    class TabPanel {
+
+      ul;
+
+      /**
+       * 選択されたアイテムの変更時のイベント
+       * @returns なし
+       */
+      onSelectedItemChanged;
+
+      #itemMap;
+      #selectedItem = null;
+      /**
+       * タブアイテムの選択
+       * 選択前のタブアイテムとコンテントの要素からselectedクラスを外し、選択されたアイテムはselectedクラスを付加する
+       */
+      get selectedItem() { return this.#selectedItem }
+      set selectedItem(item) {
+
+        const prevSelectedItem = this.#selectedItem;
+
+        if (Object.is(prevSelectedItem, item)) return;
+
+        if (prevSelectedItem) {
+
+          prevSelectedItem.li.classList.remove("selected");
+          prevSelectedItem.content.classList.remove("selected");
+          prevSelectedItem._selected = false;
+
+          Util.log(`change ${this.ul.id} previous: ${prevSelectedItem.li.textContent}`);
+        }
+
+        item.li.classList.add("selected");
+        item.content.classList.add("selected");
+        item._selected = true;
+
+        this.#selectedItem = item;
+
+        Util.log(`change ${this.ul.id} current: ${item.li.textContent}`);
+
+        this.onSelectedItemChanged?.();
+      }
+
+      /**
+       * コンストラクタ
+       * @param {string} id - ULエレメントのID 
+       */
+      constructor(id) {
+
+        Object.defineProperties(this, {
+          ul: { value: document.getElementById(id), configurable: false, writable: false },
+        });
+
+        this.#itemMap = new Map();
+      }
+
+      /**
+       * アイテムの追加
+       * @param {object} item - アイテムオブジェクトを指定。
+       * <設定プロパティ一覧>
+       * {string} caption - アイテムのタイトル
+       * {HTMLElement} content - アイテムに関連付けられたコンテント要素
+       * {boolean} selected - 選択状態にする場合true。最初に追加されたアイテムは選択状態になる。
+       * <予約プロパティ一覧>
+       * {HTMLElement} li - リスト要素
+       * 上記のプロパティはアイテム追加後に読み取り専用プロパティとして参照可能。
+       * @returns TabPanelのインスタンス
+       */
+      addItem(item) {
+
+        const li = document.createElement("LI");
+
+        Object.defineProperties(item, {
+          caption: { value: item.caption, enumerable: true, configurable: false, writable: false },
+          content: { value: item.content, enumerable: true, configurable: false, writable: false },
+          li: { value: li, enumerable: true, configurable: false, writable: false },
+          _selected: { value: item.selected, enumerable: false, configurable: false, writable: true },
+          selected: { get: () => { return item._selected }, enumerable: true, configurable: false }
+        });
+
+        li.innerHTML = item.caption;
+        li.addEventListener("click", e => { this.selectedItem = item; });
+        this.ul.appendChild(li);
+        this.#itemMap.set(item.content, item);
+
+        if (this.selectedItem == null || item.selected) {
+          this.selectedItem = item;
+        }
+
+        return this;
+      }
+
+      /**
+       * アイテムオブジェクトの取得
+       * @param {HTMLElement} content - アイテムに関連付けられたコンテント要素
+       * @returns アイテムオブジェクトを返す
+       */
+      getItem(content) {
+
+        return this.#itemMap.get(content);
+      }
+    }
+  </script>
+
+  <!--main script-->
+  <script>
+    const template_jscode = "javascript:(function(_={__PARAMS__}){function getConts(id){return{s:document.getElementById(id).nextElementSibling.nextElementSibling.getElementsByClassName('select2-selection__rendered'),h:document.getElementById(id).nextElementSibling.nextElementSibling.getElementsByClassName('select2-hidden-accessible')}}function setSelect(id,v,i=0,r=true){const c=getConts(id);c.s[i].title=c.s[i].children[0].textContent=v;if(r)c.s[i].children[0].classList.remove('drpDwnPlaceholder');c.h[i].querySelector(`option[value='${v}']`).selected=true;}function setTime(id,hhmm){setSelect(id,hhmm.substring(0,2),0,false);setSelect(id,hhmm.substring(2,4),1,false);}function setInput(id,v){document.forms.test.elements[id].value=v;}function hideAndShowItems(showItems){const s=showItems.toString();const items=['Dropdown1-li','Dropdown2-li','MultiLine-li','Time-li','Time1-li','Time2-li','Time3-li','Time4-li','Time5-li','Time6-li','Time7-li'];items.forEach(id=>{let e=document.getElementById(id);if(s.indexOf(id)==-1){e.style.display='none';e.setAttribute('needdata','false');}else{e.style.display='';e.setAttribute('needdata','true');}});}if(!!_['タイミング']){setSelect('Dropdown-arialabel-cont',_['タイミング']);const showItemsTbl={'前日確認':()=>{hideAndShowItems(['Time-li','Time1-li','Time2-li']);},'出発':()=>{hideAndShowItems(['Dropdown1-li','Dropdown2-li','Time3-li'].concat(getConts('Dropdown2-arialabel-cont').h[0].selectedOptions[0].value=='問題あり'?['MultiLine-li']:[]));},'到着':()=>{hideAndShowItems(['Time4-li']);},'入館':()=>{hideAndShowItems(['']);},'退館':()=>{hideAndShowItems(['Time5-li','Time6-li','Time7-li']);},};showItemsTbl[_['タイミング']]?.();}if(!!_['氏名'])setInput('SingleLine1-arialabel',_['氏名']);if(!!_['Eメール1'])setInput('Email-arialabel',_['Eメール1']);if(!!_['Eメール2'])setInput('Email1-arialabel',_['Eメール2']);if(!!_['出発予定時間']){setTime('Time-arialabel',_['出発予定時間']);document.getElementById('Date-date').value=new Date(new Date().setDate(new Date().getDate()+1)).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});}if(!!_['到着予定時間'])setTime('Time1-arialabel',_['到着予定時間']);if(!!_['開始予定時間'])setTime('Time2-arialabel',_['開始予定時間']);if(!!_['検温'])setSelect('Dropdown1-arialabel-cont',_['検温']);if(!!_['開始時間'])setTime('Time5-arialabel',_['開始時間']);if(!!_['終了時間'])setTime('Time6-arialabel',_['終了時間']);if(!!_['休憩時間'])setTime('Time7-arialabel',_['休憩時間']);})()";   
+    
+    function loadUserData(formElements) {
+
+      try {
+        const json = localStorage.getItem("userdata");
+        console.log(json);
+        const userData = JSON.parse(json);
+
+        if(userData) {
+
+          Object.entries(userData).forEach(([name, value]) => {
+            
+            formElements[name].value = value;
+          })
+        }
+      } catch(e) {
+        // ユーザーデータなし or エラー
+      }
+    }
+
+    function saveUserData(formElements) {
+
+      const userData = {};
+
+      // user-dataを所有するクラスを集めて名前をキーにして値をJSONオブジェクトに保存
+      Array.prototype.forEach.call(document.getElementsByClassName("user-data"), input => {
+        userData[input.name] = input.value;
+      });
+
+      const json = JSON.stringify(userData);
+      localStorage.setItem("userdata", json);
+      console.log(json)
+    }
+
+    globalThis.addEventListener("load", () => {
+
+      const form = document.forms[0];
+      const formElements = document.forms[0].elements;
+
+      loadUserData(formElements);
+
+      globalThis.addEventListener("unload", ()=> {saveUserData(formElements)});
+
+      const getCommonParams = ()=>`'氏名':'${formElements.name.value}','Eメール1':'${formElements.email.value}','Eメール2':'${formElements.email1.value}'`;
+
+      const getParamsStrings =  new Map([
+        ["general-purpose", ()=>`${getCommonParams()},'タイミング':''`],
+        ["day-before", ()=>`${getCommonParams()},'タイミング':'前日確認','出発予定時間':'${formElements.scheduledDepartureTime.value}','到着予定時間':'${formElements.estimatedArrivalTimes.value}','開始予定時間':'${formElements.scheduledStartTime.value}'`],
+        ["departure", ()=>`${getCommonParams()},'タイミング':'出発','検温結果':'${formElements.temperatureCheck.value}'`],
+        ["arrival", ()=>`${getCommonParams()},'タイミング':'到着'`],
+        ["enter", ()=>`${getCommonParams()},'タイミング':'入館'`],
+        ["leaving", ()=>`${getCommonParams()},'タイミング':'退館','開始時間':'${formElements.startTime.value}','終了時間':'${formElements.endTime.value}','休憩時間':'${formElements.breakTime.value}'`]
+      ]);
+
+      function updateJscode(content) {
+
+        const jscode = template_jscode.replace(/__PARAMS__/, getParamsStrings.get(content.id)());
+
+        formElements.displayJscode.value = jscode;
+        
+        document.getElementById("bookmarklet").href = jscode;
+      }
+
+      function updateBookmarkletTitle(content) {
+
+        document.getElementById("bookmarklet").textContent = content.getElementsByClassName("input-title")[0].value;
+      }
+
+      const tabPanel = new TabPanel("content-list");
+
+      // タブが変更されたらコードとタイトルの更新
+      tabPanel.onSelectedItemChanged = () => { 
+
+        updateJscode(tabPanel.selectedItem.content);
+
+        updateBookmarkletTitle(tabPanel.selectedItem.content);
+      };
+
+      tabPanel
+        .addItem({ caption: "汎用", content: document.getElementById("general-purpose"), selected: true})
+        .addItem({ caption: "前日<br>確認", content: document.getElementById("day-before")})
+        .addItem({ caption: "出発", content: document.getElementById("departure")})
+        .addItem({ caption: "到着", content: document.getElementById("arrival")})
+        .addItem({ caption: "入館", content: document.getElementById("enter")})
+        .addItem({ caption: "退館", content: document.getElementById("leaving")});
+
+      // 特定のクラスを保有するinput要素に対し一括で対応したイベントリスナーを登録
+      // onChangeイベントで行う理由はonInputで行うとIMEオン時の文字入力中も判定されて微妙にうまく処理がいかないためと、
+      // input要素での確定(Enter、フォーカスを移して確定)で処理が実行される状況を利用しタイトルに空文字がセット(確定)されたら初期値でリセットさせるため。
+      Array.prototype.forEach.call(form.getElementsByClassName("input-basic"), input => {
+        input.addEventListener("change", function() {
+          updateJscode(tabPanel.selectedItem.content);
+        })
+      });
+      
+      Array.prototype.forEach.call(form.getElementsByClassName("input-time"), input => {
+        input.addEventListener("change", function() {
+          this.value = this.value.replace(/[Ａ-Ｚａ-ｚ０-９]/g, s=>String.fromCharCode(s.charCodeAt(0) - 65248)).replace(/([^0-9])/g,'').substring(0,4);
+          updateJscode(tabPanel.selectedItem.content);
+        })
+      });
+
+      Array.prototype.forEach.call(form.getElementsByClassName("input-title"), input => {
+        input.addEventListener("change", function() {
+
+          // 空文字を確定した場合に初期値に元に戻す
+          if(this.value == "") {
+            this.value = this.defaultValue;
+          }
+
+          updateBookmarkletTitle(tabPanel.selectedItem.content);
+        })
+      });
+
+      Array.prototype.forEach.call(form.getElementsByClassName("input-item copy"), div => {
+        div.getElementsByTagName("button")[0].addEventListener("click", function() {
+          div.getElementsByTagName("input")[0].select();
+          Util.copyTextToClipboad(div.getElementsByTagName("input")[0].value);
+        })
+      });
+      
+      document.getElementById("common-section2").getElementsByTagName("button")[0].addEventListener("click", () => {
+        formElements.displayJscode.select();
+        Util.copyTextToClipboad(formElements.displayJscode.value);
+      });
+
+    });
+  </script>
+</head>
+
+<body>
+  <header>
+    <h4>トライアンフ入退館フォーム一括入力ブックマークレット作成ツール</h4>
+  </header>
+
+  <form>
+    <!--タブリスト-->
+    <ul id="content-list"></ul>
+
+    <!--共通項目-->
+    <fieldset id="common-section">
+      <div class="input-item">
+        <input type="text" name="name" class="input-basic user-data">
+        <label>氏名</label>
+      </div>
+      <div class="input-item">
+        <input type="email" name="email" class="input-basic user-data">
+        <label>Eメール①</label>
+      </div>
+      <div class="input-item">
+        <input type="email" name="email1" class="input-basic user-data">
+        <label>Eメール②</label>
+      </div>
+    </fieldset>
+
+    <!--各項目-->
+    <fieldset id="general-purpose" class="timing-content">
+      <div class="input-item copy">
+        <input type="text" name="generalPurposeTitle" value="/t0_汎用" class="input-title user-data">
+        <label>タイトル</label>
+        <button type="button">コピー</button>
+      </div>
+    </fieldset>
+
+    <fieldset id="day-before" class="timing-content">
+      <div class="input-item">
+        <input type="text" name="scheduledDepartureTime" class="input-time user-data">
+        <label>出発予定時間</label>
+      </div>
+      <div class="input-item">
+        <input type="text" name="estimatedArrivalTimes" class="input-time user-data">
+        <label>到着予定時間</label>
+      </div>
+      <div class="input-item">
+        <input type="text" name="scheduledStartTime" class="input-time user-data">
+        <label>開始予定時間</label>
+      </div>
+      <div class="input-item copy">
+        <input type="text" name="dayBeforeTitle" value="/t1_前日確認" class="input-title user-data">
+        <label>タイトル</label>
+        <button type="button">コピー</button>
+      </div>
+    </fieldset>
+
+    <fieldset id="departure" class="timing-content">
+      <div class="input-item">
+        <input type="text" name="temperatureCheck" class="input-basic user-data">
+        <label>検温結果</label>
+      </div>
+      <div class="input-item copy">
+        <input type="text" name="departureTitle" value="/t2_出発" class="input-title user-data">
+        <label>タイトル</label>
+        <button type="button">コピー</button>
+      </div>
+    </fieldset>
+
+    <fieldset id="arrival" class="timing-content">
+      <div class="input-item copy">
+        <input type="text" name="arrivalTitle" value="/t3_到着" class="input-title user-data">
+        <label>タイトル</label>
+        <button type="button">コピー</button>
+      </div>
+    </fieldset>
+
+    <fieldset id="enter" class="timing-content">
+      <div class="input-item copy">
+        <input type="text" name="enterTitle" value="/t4_入館" class="input-title user-data">
+        <label>タイトル</label>
+        <button type="button">コピー</button>
+      </div>
+    </fieldset>
+
+    <fieldset id="leaving" class="timing-content">
+      <div class="input-item">
+        <input type="text" name="startTime" class="input-time user-data">
+        <label>開始時間</label>
+      </div>
+      <div class="input-item">
+        <input type="text" name="endTime" class="input-time user-data">
+        <label>終了時間</label>
+      </div>
+      <div class="input-item">
+        <input type="text" name="breakTime" class="input-time user-data">
+        <label>休憩時間</label>
+      </div>
+      <div class="input-item copy">
+        <input type="text" name="leavingTitle" value="/t5_退館" class="input-title user-data">
+        <label>タイトル</label>
+        <button type="button">コピー</button>
+      </div>
+    </fieldset>
+
+    <fieldset id="common-section2">
+      <textarea readonly name="displayJscode"></textarea>
+      <a id="bookmarklet"></a>
+      <button type="button">コードをコピー</button>
+      <div class="details">
+        <h4>使い方</h4>
+        <ul>
+          <li>ブックマークへの登録
+            <ul>
+              <li>
+                PC版Chrome/Firefox/Edge<br>
+                リンクをドラッグ＆ドロップしてブックマークに登録
+              </li>
+              <li>
+                Android/iOS<br>ページをブックマークに登録後ブックマークを編集<br>
+                名前にタイトル、URLにコードを入力(コピー＆ペースト)
+              </li>
+            </ul>
+          </li>
+          <li>ブックマークレットの実行
+            <div>ブラウザのアドレスバーにブックマークのタイトルを数文字入力すると候補の一覧が表示されるので該当のブックマークを選択して確定。</div>
+          </li>
+        </ul>
+      </div>
+    </fieldset>
+  </form>
+  <footer>
+    <div>ver 24.11.17.23</div>
+    <div>&copy; K.N All Rights Reserved.</div>
+  </footer>
+</body>
+</html>
