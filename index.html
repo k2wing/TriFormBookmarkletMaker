@@ -481,14 +481,15 @@
 
       Array.prototype.forEach.call(form.getElementsByClassName("input-item copy"), div => {
         div.getElementsByTagName("button")[0].addEventListener("click", function() {
-          div.getElementsByTagName("input")[0].select();
-          Util.copyTextToClipboad(div.getElementsByTagName("input")[0].value);
+          const input = div.querySelector("input");
+          Util.copyTextToClipboad(input.value);
+          input.select();
         })
       });
       
       document.getElementById("common-section2").getElementsByTagName("button")[0].addEventListener("click", () => {
-        formElements.displayJscode.select();
         Util.copyTextToClipboad(formElements.displayJscode.value);
+        formElements.displayJscode.select();
       });
 
     });
