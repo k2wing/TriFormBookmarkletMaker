@@ -364,7 +364,11 @@
 
   <!--main script-->
   <script>
-    const template_jscode = "javascript:(function(_={__PARAMS__}){function getConts(id){return{s:document.getElementById(id).nextElementSibling.nextElementSibling.getElementsByClassName('select2-selection__rendered'),h:document.getElementById(id).nextElementSibling.nextElementSibling.getElementsByClassName('select2-hidden-accessible')}}function setSelect(id,v,i=0,r=true){const c=getConts(id);c.s[i].title=c.s[i].children[0].textContent=v;if(r)c.s[i].children[0].classList.remove('drpDwnPlaceholder');c.h[i].querySelector(`option[value='${v}']`).selected=true;}function setTime(id,hhmm){setSelect(id,hhmm.substring(0,2),0,false);setSelect(id,hhmm.substring(2,4),1,false);}function setInput(id,v){document.forms.test.elements[id].value=v;}function hideAndShowItems(showItems){const s=showItems.toString();const items=['Dropdown1-li','Dropdown2-li','MultiLine-li','Time-li','Time1-li','Time2-li','Time3-li','Time4-li','Time5-li','Time6-li','Time7-li'];items.forEach(id=>{let e=document.getElementById(id);if(s.indexOf(id)==-1){e.style.display='none';e.setAttribute('needdata','false');}else{e.style.display='';e.setAttribute('needdata','true');}});}if(!!_['タイミング']){setSelect('Dropdown-arialabel-cont',_['タイミング']);const showItemsTbl={'前日確認':()=>{hideAndShowItems(['Time-li','Time1-li','Time2-li']);},'出発':()=>{hideAndShowItems(['Dropdown1-li','Dropdown2-li','Time3-li'].concat(getConts('Dropdown2-arialabel-cont').h[0].selectedOptions[0].value=='問題あり'?['MultiLine-li']:[]));},'到着':()=>{hideAndShowItems(['Time4-li']);},'入館':()=>{hideAndShowItems(['']);},'退館':()=>{hideAndShowItems(['Time5-li','Time6-li','Time7-li']);},};showItemsTbl[_['タイミング']]?.();}if(!!_['氏名'])setInput('SingleLine1-arialabel',_['氏名']);if(!!_['Eメール1'])setInput('Email-arialabel',_['Eメール1']);if(!!_['Eメール2'])setInput('Email1-arialabel',_['Eメール2']);if(!!_['出発予定時間']){setTime('Time-arialabel',_['出発予定時間']);document.getElementById('Date-date').value=new Date(new Date().setDate(new Date().getDate()+1)).toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'});}if(!!_['到着予定時間'])setTime('Time1-arialabel',_['到着予定時間']);if(!!_['開始予定時間'])setTime('Time2-arialabel',_['開始予定時間']);if(!!_['検温'])setSelect('Dropdown1-arialabel-cont',_['検温']);if(!!_['開始時間'])setTime('Time5-arialabel',_['開始時間']);if(!!_['終了時間'])setTime('Time6-arialabel',_['終了時間']);if(!!_['休憩時間'])setTime('Time7-arialabel',_['休憩時間']);})()";   
+    // メインコードはメンテナンス性を考慮し外部サーバーから読み込む
+    // データはセッションストレージを介して連携
+    const keyGUID = "ebde39226ae24807bee2567dc4c19c8e";
+    const url = "https://k2wing.github.io/triumphform-bookmarklet-generator/bookmarklet.js";
+    const template_jscode = `javascript:(function(_={__PARAMS__}){sessionStorage.setItem('${keyGUID}',JSON.stringify(_));e=document.createElement('script');e.src='${url}';document.body.appendChild(e);})()`;
     
     function loadUserData(formElements) {
 
@@ -409,15 +413,15 @@
 
       globalThis.addEventListener("unload", ()=> {saveUserData(formElements)});
 
-      const getCommonParams = ()=>`'氏名':'${formElements.name.value}','Eメール1':'${formElements.email.value}','Eメール2':'${formElements.email1.value}'`;
+      const getCommonParams = ()=>`name:'${formElements.name.value}',email:'${formElements.email.value}',email1:'${formElements.email1.value}'`;
 
       const getParamsStrings =  new Map([
-        ["general-purpose", ()=>`${getCommonParams()},'タイミング':''`],
-        ["day-before", ()=>`${getCommonParams()},'タイミング':'前日確認','出発予定時間':'${formElements.scheduledDepartureTime.value}','到着予定時間':'${formElements.estimatedArrivalTimes.value}','開始予定時間':'${formElements.scheduledStartTime.value}'`],
-        ["departure", ()=>`${getCommonParams()},'タイミング':'出発','検温結果':'${formElements.temperatureCheck.value}'`],
-        ["arrival", ()=>`${getCommonParams()},'タイミング':'到着'`],
-        ["enter", ()=>`${getCommonParams()},'タイミング':'入館'`],
-        ["leaving", ()=>`${getCommonParams()},'タイミング':'退館','開始時間':'${formElements.startTime.value}','終了時間':'${formElements.endTime.value}','休憩時間':'${formElements.breakTime.value}'`]
+        ["general-purpose", ()=>`${getCommonParams()},timing:''`],
+        ["day-before", ()=>`${getCommonParams()},timing:'前日確認',scheduledDepartureTime:'${formElements.scheduledDepartureTime.value}',estimatedArrivalTimes:'${formElements.estimatedArrivalTimes.value}',scheduledStartTime:'${formElements.scheduledStartTime.value}'`],
+        ["departure", ()=>`${getCommonParams()},timing:'出発',temperatureCheck:'${formElements.temperatureCheck.value}'`],
+        ["arrival", ()=>`${getCommonParams()},timing:'到着'`],
+        ["enter", ()=>`${getCommonParams()},timing:'入館'`],
+        ["leaving", ()=>`${getCommonParams()},timing:'退館',startTime:'${formElements.startTime.value}',endTime:'${formElements.endTime.value}',breakTime:'${formElements.breakTime.value}'`]
       ]);
 
       function updateJscode(content) {
