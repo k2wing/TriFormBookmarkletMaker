@@ -367,7 +367,7 @@
     // メインコードはメンテナンス性を考慮し外部サーバーから読み込む
     // データはセッションストレージを介して連携
     const keyGUID = "ebde39226ae24807bee2567dc4c19c8e";
-    const url = "https://k2wing.github.io/triumphform-bookmarklet-generator/bookmarklet.js";
+    const url = "https://k2wing.github.io/triumphform-bookmarklet-generator/batchinput.js";
     const template_jscode = `javascript:(function(_={__PARAMS__}){sessionStorage.setItem('${keyGUID}',JSON.stringify(_));e=document.createElement('script');e.src='${url}';document.body.appendChild(e);})()`;
     
     function loadUserData(formElements) {
