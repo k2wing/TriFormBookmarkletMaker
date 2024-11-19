@@ -37,6 +37,7 @@
 		items.forEach(id=>{
 			let e = document.getElementById(id);
 			// 表示する項目を文字列可してその中に指定のID文字列が存在する場合は表示、存在し無い場合は非表示で振り分け
+			// ※タイミングの選択によって入力必須項目が変化するためフラグを初期設定をする
 			if(s.indexOf(id) == -1) {
 				e.style.display='none';
 				e.setAttribute('needdata','false');
@@ -67,17 +68,23 @@
 	// セッションストレージのキーはGUIDにしてブックマークレットを実行するページ内のキーと衝突しないようにする。
 	const params = Object.freeze(JSON.parse(sessionStorage.getItem('ebde39226ae24807bee2567dc4c19c8e')));
 
-	if(!!params.timing) {//プロパティ未定義、空文字の場合はフォームに入力しない
-		setSelect('Dropdown-arialabel-cont',_.timing);
+	//プロパティ未定義、空文字の場合はフォームに入力しない
+	if(!!params.timing) {
+
 		const showItemsTbl = {
 			'前日確認':()=>{hideAndShowItems(['Time-li','Time1-li','Time2-li']);},
+			// 体調が問題ありを選択していた場合にタイミングの切り替えによる症状入力蘭を再表示
 			'出発':()=>{hideAndShowItems(['Dropdown1-li','Dropdown2-li','Time3-li'].concat(getSelectContents('Dropdown2-arialabel-cont').select[0].selectedOptions[0].value=='問題あり'?['MultiLine-li']:[]));},
 			'到着':()=>{hideAndShowItems(['Time4-li']);},
 			'入館':()=>{hideAndShowItems(['']);},
 			'退館':()=>{hideAndShowItems(['Time5-li','Time6-li','Time7-li']);},
 		};
-		showItemsTbl[_.timing]?.();
+
+		setSelect('Dropdown-arialabel-cont', params.timing);
+		
+		showItemsTbl[params.timing]?.();
 	}
+
 	if(!!params.name) setInput('SingleLine1-arialabel', params.name);
 	if(!!params.email) setInput('Email-arialabel', params.email);
 	if(!!params.email1) setInput('Email1-arialabel', params.email1);
