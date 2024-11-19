@@ -10,16 +10,23 @@
 	}
 	function setSelect(id, value, i=0, isRemoveGrayoutClass=true) { // id、vは値、iは一つの項目に複数の入力枠がある場合のインデックスで基本は0で時間系なら0=時間/1=分、rはtrueでグレーアウト(クラス)の削除
 		const selectContents = getSelectContents(id);
+		const option = selectContents.select[i].querySelector(`option[value='${value}']`);
+		// オプション選択で入力した値が存在しなかった場合は誤まったデータの送信がされないように強制終了
+		if(option == null) {
+			
+			alert(`リストに存在しないデータ(${value})が入力されたためエラーが発生しました。\n該当のブックマークレットを修正してください。`);
+			throw new Error;
+		}
+		selectContents.select[i].querySelector(`option[value='${value}']`).selected = true; // <select>フォームで送信するデータの設定
 		selectContents.span[i].title = selectContents.span[i].children[0].textContent = value; // <span> 表示用として親のtitile属性、子のテキストに値が設定される
 		if(isRemoveGrayoutClass) selectContents.span[i].children[0].classList.remove('drpDwnPlaceholder'); // タイミングとtemperatureCheckで「-select-」(初期)時はグレーアウトしているので通常表示にするために削除
-		selectContents.select[i].querySelector(`option[value='${v}']`).selected = true; // <select>フォームで送信するデータの設定
 	}
 	function setTime(id, hhmm) {
 		setSelect(id, hhmm.substring(0,2), 0, false);
 		setSelect(id, hhmm.substring(2,4), 1, false);
 	}
-	function setInput(id, v) {
-		document.forms.test.elements[id].value = v;
+	function setInput(id, value) {
+		document.forms.test.elements[id].value = value;
 	}	
 	function hideAndShowItems(showItems) {
 		
