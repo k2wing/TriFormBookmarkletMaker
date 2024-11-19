@@ -403,6 +403,7 @@
 
       const form = document.forms[0];
       const formElements = document.forms[0].elements;
+      const bookmarklet = document.getElementById("bookmarklet");
 
       loadUserData(formElements);
 
@@ -425,12 +426,12 @@
 
         formElements.displayJscode.value = jscode;
         
-        document.getElementById("bookmarklet").href = jscode;
+        bookmarklet.href = jscode;
       }
 
       function updateBookmarkletTitle(content) {
 
-        document.getElementById("bookmarklet").textContent = content.getElementsByClassName("input-title")[0].value;
+        bookmarklet.textContent = content.querySelector(".input-title").value;
       }
 
       const tabPanel = new TabPanel("content-list");
@@ -480,14 +481,14 @@
       });
 
       Array.prototype.forEach.call(form.getElementsByClassName("input-item copy"), div => {
-        div.getElementsByTagName("button")[0].addEventListener("click", function() {
+        div.querySelector("button").addEventListener("click", function() {
           const input = div.querySelector("input");
           Util.copyTextToClipboad(input.value);
           input.select();
         })
       });
       
-      document.getElementById("common-section2").getElementsByTagName("button")[0].addEventListener("click", () => {
+      document.getElementById("common-section2").querySelector("button").addEventListener("click", () => {
         Util.copyTextToClipboad(formElements.displayJscode.value);
         formElements.displayJscode.select();
       });
