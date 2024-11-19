@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
   <base target="_top">
+  <title>トライアンフ入退館フォーム一括入力ブックマークレットジェネレーター</title>
 
   <!--main style-->
   <style>
@@ -405,6 +406,8 @@
 
     globalThis.addEventListener("load", () => {
 
+      document.querySelector("header").appendChild(document.createElement("h4")).textContent = document.title;
+
       const form = document.forms[0];
       const formElements = document.forms[0].elements;
       const bookmarklet = document.getElementById("bookmarklet");
@@ -502,9 +505,7 @@
 </head>
 
 <body>
-  <header>
-    <h4>トライアンフ入退館フォーム一括入力ブックマークレット作成ツール</h4>
-  </header>
+  <header></header>
 
   <form>
     <!--タブリスト-->
