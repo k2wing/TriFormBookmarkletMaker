@@ -60,6 +60,7 @@
         height: 60px;
         box-sizing: border-box;
         background-color: rgb(208, 230, 226);
+        border-radius: 4px;
     }
 
     UL#content-list LI.selected {
@@ -146,30 +147,45 @@
       color: gray;
       font-size: 80%;
       background-color: rgb(250, 242, 233);
-      margin-top: 5px;
+      margin-top: 10px;
+      overflow: auto;
+      height: 300px;
+      border-radius: 8px;
     }
 
-    div.details > h4 {
+    div.details > div {
+      padding: 10px;
+    }
+    div.details > h3 {
       margin-top: 0px;
+      margin-bottom: 0px;
       padding-left: 1em;
+      line-height: 2em;;
       background-color: rgb(255, 230, 193);
     }
-    div.details > ul {
+    div.details > ul,
+    div.details > ol {
       margin-top: 0px;
+      margin-bottom: 0px;
       padding: 0px 5px 0px 25px;
     }
-    div.details > ul > li {
+    div.details > ul h4 {
+      margin: 0px;
+    }
+    div.details > ul > li, 
+    div.details > ol > li {
       line-height: 3em;
       
     }
-    div.details > ul > li > ul {
+    div.details > ul > li > ul,
+    div.details > ul > li > ol {
       padding: 0px 5px 0px 15px;
     }
-    div.details > ul > li > ul > li {
-      line-height: 1.8em;
-    }
+    div.details > ul > li > ul > li,
+    div.details > ul > li > ol > li,
     div.details > ul > li > div {
-      line-height: 1.8em;
+      line-height: 1.5em;
+      padding-bottom: 5px;
     }
   </style>
 
