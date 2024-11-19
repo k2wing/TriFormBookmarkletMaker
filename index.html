@@ -118,14 +118,14 @@
     fieldset#common-section2 {
       grid-area: commonsection2;
       display: grid;
-      grid-template-columns: 1fr max-content;
+      grid-template-columns: auto 1fr max-content;
       grid-template-rows: auto auto auto;
       place-items: stretch;
       gap: 5px;
       grid-template-areas:
-        "textarea textarea"
-        "link copy"
-        "details details";
+        "textarea textarea textarea"
+        "link blank copy"
+        "details details details";
     }
     fieldset#common-section2 > textarea {
       grid-area: textarea;
