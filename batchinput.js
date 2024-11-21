@@ -1,3 +1,11 @@
+/*
+トライアンフ入退館フォーム一括入力ブックマークレット
+https://github.com/k2wing/triumphform-bookmarklet-generator
+
+Copyright (c) 2024 K.N/k2wing
+Released under the MIT license
+http://opensource.org/licenses/mit-license.php
+*/
 (function() {
 	function getSelectContents(id) {
 		return {
