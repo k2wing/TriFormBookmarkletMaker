@@ -4,7 +4,7 @@ https://github.com/k2wing/triumphform-bookmarklet-generator
 
 Copyright (c) 2024 K.N/k2wing
 Released under the MIT license
-http://opensource.org/licenses/mit-license.php
+https://github.com/k2wing/triumphform-bookmarklet-generator/blob/main/LICENSE
 */
 (function() {
 	function getSelectContents(id) {
